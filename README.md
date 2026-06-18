@@ -148,18 +148,30 @@ execution:
   mode: "local"
 ```
 
-Start from Codex:
+There are three common ways to start Auto Researcher:
+
+1. **Method 1: Codex skill** — recommended for normal use inside Codex.
+2. **Method 2: Python entrypoint** — useful for servers, tmux, SSH sessions, and scripts.
+3. **Method 3: Limited or directed run** — useful when testing, debugging, or giving one explicit instruction.
+
+### Method 1: Start From Codex
+
+Use this after `python install.py` has installed the `$auto-research` skill:
 
 ```text
 $auto-research --project ~/my_experiment --gpu 0
 ```
 
-Or start directly from Python:
+### Method 2: Start From Python
+
+Use this when you want a plain shell command, for example inside `tmux` or on a remote server:
 
 ```bash
 cd /path/to/auto_researcher
 python -m auto_researcher.runner --project ~/my_experiment --gpu 0
 ```
+
+### Method 3: Limited Or Directed Run
 
 Run only a few cycles while testing:
 
@@ -168,6 +180,15 @@ python -m auto_researcher.runner \
   --project ~/my_experiment \
   --gpu 0 \
   --max-cycles 2
+```
+
+Send one explicit directive for the next cycle:
+
+```bash
+python -m auto_researcher.runner \
+  --project ~/my_experiment \
+  --gpu 0 \
+  --directive "Try cosine warmup and compare with the current best run"
 ```
 
 ## Configuration

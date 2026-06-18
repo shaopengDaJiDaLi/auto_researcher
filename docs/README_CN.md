@@ -148,18 +148,30 @@ execution:
   mode: "local"
 ```
 
-从 Codex 启动：
+Auto Researcher 常见有三种启动方式：
+
+1. **方式一：Codex skill** — 推荐日常在 Codex 里使用。
+2. **方式二：Python entrypoint** — 适合服务器、tmux、SSH 会话和脚本。
+3. **方式三：限制轮数或指定指令运行** — 适合测试、调试，或给下一轮明确任务。
+
+### 方式一：从 Codex 启动
+
+执行过 `python install.py` 后，就可以使用 `$auto-research` skill：
 
 ```text
 $auto-research --project ~/my_experiment --gpu 0
 ```
 
-也可以直接从 Python 启动：
+### 方式二：从 Python 启动
+
+如果你想用普通 shell 命令启动，比如在 `tmux` 或远程服务器上运行，用这个方式：
 
 ```bash
 cd /path/to/auto_researcher
 python -m auto_researcher.runner --project ~/my_experiment --gpu 0
 ```
+
+### 方式三：限制轮数或指定指令运行
 
 测试时只跑少量循环：
 
@@ -168,6 +180,15 @@ python -m auto_researcher.runner \
   --project ~/my_experiment \
   --gpu 0 \
   --max-cycles 2
+```
+
+给下一轮发送一个明确指令：
+
+```bash
+python -m auto_researcher.runner \
+  --project ~/my_experiment \
+  --gpu 0 \
+  --directive "尝试 cosine warmup，并和当前最佳结果对比"
 ```
 
 ## 配置
