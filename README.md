@@ -9,6 +9,11 @@
 </p>
 
 <p align="center">
+  <a href="README.md">English</a> |
+  <a href="docs/README_CN.md">中文</a>
+</p>
+
+<p align="center">
   <a href="#install">Install</a> |
   <a href="#quickstart">Quickstart</a> |
   <a href="#configuration">Configuration</a> |
