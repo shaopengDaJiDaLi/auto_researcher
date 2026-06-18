@@ -16,6 +16,7 @@
 <p align="center">
   <a href="#安装">安装</a> |
   <a href="#快速开始">快速开始</a> |
+  <a href="#示例">示例</a> |
   <a href="#配置">配置</a> |
   <a href="#工作机制">工作机制</a>
 </p>
@@ -194,6 +195,12 @@ python -m auto_researcher.runner \
   --gpu 0 \
   --directive "尝试 cosine warmup，并和当前最佳结果对比"
 ```
+
+## 示例
+
+| 示例 | 内容 |
+|------|------|
+| [OpenGait DeepGaitV2 on Gait3D](../examples/opengait_gait3d_deepgaitv2/README_CN.md) | 把 Auto Researcher 项目模板复制到 OpenGait，用 Codex 准备安全的 DeepGaitV2 dry-run，再由 Auto Researcher 启动并监控 Gait3D 训练。 |
 
 ## 配置
 

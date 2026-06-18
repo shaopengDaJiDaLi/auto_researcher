@@ -1,0 +1,54 @@
+project:
+  name: "opengait-gait3d-deepgaitv2"
+  brief: "PROJECT_BRIEF.md"
+  workspace: "./workspace"
+
+agent:
+  provider: "codex_cli"
+  model: "gpt-5.4"
+
+  leader_provider: "codex_cli"
+  reflect_provider: "codex_cli"
+  code_modify_provider: "codex_cli"
+  code_launch_provider: "builtin"
+
+  max_cycles: -1
+  max_steps_per_cycle: 3
+  cooldown_interval: 300
+  no_progress_fallback_threshold: 3
+
+strategy:
+  enabled: true
+  require_initial_ideation: false
+  stagnation_cycles_before_idea: 0
+  idea_to_code_handoff: true
+  require_dry_run: true
+  dry_run_timeout: 600
+
+execution:
+  mode: "local"
+
+ledger:
+  enabled: true
+  recent_in_context: 5
+  metric_key: ""
+  metric_direction: "higher_better"
+
+journal:
+  enabled: true
+  max_chars: 4000
+  tail_in_context: 1500
+
+monitor:
+  poll_interval: 900
+  zero_llm: true
+  notify_on_complete: true
+
+experiment:
+  mandatory_dry_run: true
+  max_parallel: 1
+  log_tail_lines: 80
+
+gpu:
+  auto_detect: true
+  reserve_last: false

@@ -16,6 +16,7 @@
 <p align="center">
   <a href="#install">Install</a> |
   <a href="#quickstart">Quickstart</a> |
+  <a href="#examples">Examples</a> |
   <a href="#configuration">Configuration</a> |
   <a href="#how-it-works">How It Works</a>
 </p>
@@ -194,6 +195,12 @@ python -m auto_researcher.runner \
   --gpu 0 \
   --directive "Try cosine warmup and compare with the current best run"
 ```
+
+## Examples
+
+| Example | What it shows |
+|---------|---------------|
+| [OpenGait DeepGaitV2 on Gait3D](examples/opengait_gait3d_deepgaitv2/README.md) | Copy an Auto Researcher project template into OpenGait, use Codex to prepare a safe DeepGaitV2 dry-run, then let Auto Researcher launch and monitor Gait3D training. |
 
 ## Configuration
 
