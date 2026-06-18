@@ -78,12 +78,20 @@ codex --version
 git clone https://github.com/shaopengDaJiDaLi/auto_researcher.git
 cd auto_researcher
 
-python -m venv .venv
-source .venv/bin/activate
+conda create -n autoR python=3.11 -y
+conda activate autoR
 pip install -r requirements.txt
 
 python install.py
 python -m auto_researcher.runner --check
+```
+
+如果你不用 conda，也可以用本地 virtual environment：
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 `python install.py` 会安装本地 Codex skills，包括 `$auto-research`。
