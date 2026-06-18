@@ -126,10 +126,14 @@ Create or modify PyTorch training code in this project.
 - If accuracy reaches 80%, stop and write a report.
 ```
 
-Add a minimal project config:
+Add an optional per-project config when this experiment needs settings different from the default [`config.yaml`](config.yaml). Here, "project" means the experiment/code directory you pass to `--project`, such as `~/my_experiment`; you do not need to create this file for every run.
 
 ```yaml
 # ~/my_experiment/config.yaml
+# This file belongs to one experiment project directory.
+# Omit it to use Auto Researcher's default config.
+# Add it when a project needs its own provider, GPU backend, dry-run policy,
+# SSH/Slurm execution settings, or role-specific overrides.
 agent:
   provider: "codex_cli"
   model: "gpt-5.4"

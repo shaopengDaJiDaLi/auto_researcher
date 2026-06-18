@@ -126,10 +126,14 @@ cd ~/my_experiment
 - 如果准确率达到 80%，停止并写报告。
 ```
 
-添加最小配置：
+如果这个实验项目需要不同于默认 [`config.yaml`](../config.yaml) 的设置，可以添加一个可选的项目级配置。这里的“项目”指你传给 `--project` 的实验/代码目录，比如 `~/my_experiment`；不是每次运行都必须创建这个文件。
 
 ```yaml
 # ~/my_experiment/config.yaml
+# 这个文件属于某一个实验项目目录。
+# 不写这个文件时，会使用 Auto Researcher 的默认配置。
+# 当某个项目需要自己的 provider、GPU 后端、dry-run 策略、
+# SSH/Slurm 执行设置，或角色级覆盖时，再添加它。
 agent:
   provider: "codex_cli"
   model: "gpt-5.4"
