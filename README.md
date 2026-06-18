@@ -5,67 +5,94 @@
 </p>
 
 <p align="center">
-  <strong>A cloud-API-first research operations loop for autonomous deep learning experiments.</strong>
+  <strong>A Codex CLI-driven controller for long-running deep learning experiments.</strong>
 </p>
 
 <p align="center">
+  <a href="#install">Install</a> |
   <a href="#quickstart">Quickstart</a> |
-  <a href="#architecture">Architecture</a> |
   <a href="#configuration">Configuration</a> |
-  <a href="#skills">Skills</a>
+  <a href="#how-it-works">How It Works</a>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python 3.10+"/>
-  <img src="https://img.shields.io/badge/cloud%20LLM%20API-only-0f766e.svg" alt="Cloud API only"/>
-  <img src="https://img.shields.io/badge/Codex%20CLI-supported-111827.svg" alt="Codex CLI"/>
-  <img src="https://img.shields.io/badge/Claude%20Code-supported-6d28d9.svg" alt="Claude Code"/>
+  <img src="https://img.shields.io/badge/Codex%20CLI-required-111827.svg" alt="Codex CLI required"/>
   <img src="https://img.shields.io/badge/license-Apache%202.0-green.svg" alt="License"/>
 </p>
 
 ---
 
-## What It Is
+## What This Is
 
-Auto Researcher runs the repetitive experiment-ops loop around machine learning research:
+Auto Researcher is not a standalone model and not just a prompt pack. It is a controller around **Codex CLI** for autonomous experiment operations:
 
-1. Read the project brief, memory, ledger, journals, and human directives.
-2. Plan the next action with a leader role.
-3. Route to exactly one worker role: `idea`, `code`, or `writing`.
-4. For code work, let an agent edit the repo but keep training launch under framework control.
-5. Dry-run, launch, monitor PID/log/GPU status, and reflect on the result.
-6. Record the cycle and continue.
+1. Read a research brief and current experiment state.
+2. Ask Codex CLI to inspect and modify the codebase.
+3. Run a required dry-run.
+4. Launch training through Auto Researcher, not directly through Codex.
+5. Monitor PID, logs, and GPU status with zero LLM calls.
+6. Reflect on results, update memory and the experiment ledger, then continue.
 
-The key design choice is separation of responsibility: coding agents can modify files, but Auto Researcher owns dry-run, launch, PID/log tracking, and monitoring. That keeps the long-running experiment state observable and recoverable.
+The important boundary is deliberate: **Codex writes code; Auto Researcher launches and monitors training.** That keeps long-running jobs traceable through recorded PID/log paths instead of leaving them hidden inside an agent session.
 
-## What Changed In This Refactor
+## Install
 
-This project is the clean successor line to the old codebase:
+### 1. Install Codex CLI
 
-- Runtime package: `auto_researcher/`
-- Main entrypoint: `python -m auto_researcher.runner`
-- Main skill: `/auto-research` for Claude Code, `$auto-research` for Codex
-- Prompt directory: `prompts/`
-- Progress export: `notes-sync`
-- Cloud APIs only: no local LLM setup is required
+Codex CLI is the required coding agent for the recommended workflow.
 
-## Quickstart
+On macOS or Linux:
 
 ```bash
-cd ~/project/auto_researcher
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+```
+
+Alternative installs:
+
+```bash
+npm install -g @openai/codex
+brew install --cask codex
+```
+
+Then sign in. Running `codex` opens the normal interactive flow; current CLI versions also support `codex login`:
+
+```bash
+codex login
+```
+
+Verify:
+
+```bash
+codex --version
+```
+
+### 2. Install Auto Researcher
+
+```bash
+git clone https://github.com/shaopengDaJiDaLi/auto_researcher.git
+cd auto_researcher
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
 python install.py
 python -m auto_researcher.runner --check
 ```
 
-Create or choose an experiment project:
+`python install.py` installs the local Codex skills, including `$auto-research`.
 
-```text
-my_experiment/
-├── PROJECT_BRIEF.md
-└── config.yaml          # optional
+## Quickstart
+
+Create an experiment project:
+
+```bash
+mkdir -p ~/my_experiment
+cd ~/my_experiment
 ```
 
-Minimal `PROJECT_BRIEF.md`:
+Write `PROJECT_BRIEF.md`:
 
 ```markdown
 # Goal
@@ -77,6 +104,7 @@ Create or modify PyTorch training code in this project.
 # Constraints
 - Use GPU 0 only
 - Always dry-run before long training
+- Write logs under ./logs/
 - Report validation accuracy after each run
 
 # Decision Rules
@@ -85,148 +113,136 @@ Create or modify PyTorch training code in this project.
 - If accuracy reaches 80%, stop and write a report.
 ```
 
-Start from Claude Code:
-
-```bash
-/auto-research --project /path/to/my_experiment --gpu 0
-```
-
-Or start from the Python entrypoint:
-
-```bash
-python -m auto_researcher.runner --project /path/to/my_experiment --gpu 0
-```
-
-Send a one-cycle directive:
-
-```bash
-python -m auto_researcher.runner \
-  --project /path/to/my_experiment \
-  --directive "Search recent papers about cosine warmup before the next run"
-```
-
-## Architecture
-
-<p align="center">
-  <img src="assets/readme/architecture.png" alt="Auto Researcher architecture" width="900"/>
-</p>
-
-Auto Researcher uses a leader-worker loop with deterministic routing guards:
-
-| Stage | What Happens |
-|-------|--------------|
-| `Leader / Think` | Reads project state and proposes the next action |
-| `Strategy Router` | Forces idea/code handoffs when configured |
-| `Idea` | Searches papers and writes actionable hypotheses |
-| `Code Modify` | Edits code/configs, often via Codex CLI |
-| `Framework Launch` | Runs dry-run and `launch_experiment` itself |
-| `Monitor` | Checks PID, logs, and GPU status with zero LLM calls |
-| `Reflect` | Parses metrics, updates memory, ledger, and journals |
-
-The monitor phase is intentionally cheap: no LLM call is made while training is running.
-
-## Recommended Hybrid Setup
-
-Use Codex CLI where it is strongest: planning, reflection, and code modification. Keep actual training launch inside Auto Researcher.
+Add a minimal project config:
 
 ```yaml
+# ~/my_experiment/config.yaml
 agent:
-  provider: "openai"
+  provider: "codex_cli"
   model: "gpt-5.4"
-  api_key_env: "OPENAI_API_KEY"
 
   leader_provider: "codex_cli"
   reflect_provider: "codex_cli"
   code_modify_provider: "codex_cli"
   code_launch_provider: "builtin"
-  idea_provider: "openai"
-  writing_provider: "openai"
 
 strategy:
   enabled: true
-  require_initial_ideation: true
-  stagnation_cycles_before_idea: 3
-  idea_to_code_handoff: true
   require_dry_run: true
   dry_run_timeout: 300
+
+execution:
+  mode: "local"
 ```
 
-Why split `code_modify_provider` and `code_launch_provider`?
+Start from Codex:
 
-- `codex_cli` may use its own agentic tool loop.
-- That is useful for editing code.
-- It is risky for launching training because it can bypass framework PID/log tracking.
-- `code_launch_provider: "builtin"` keeps dry-run and training launch authoritative.
+```text
+$auto-research --project ~/my_experiment --gpu 0
+```
+
+Or start directly from Python:
+
+```bash
+cd /path/to/auto_researcher
+python -m auto_researcher.runner --project ~/my_experiment --gpu 0
+```
+
+Run only a few cycles while testing:
+
+```bash
+python -m auto_researcher.runner \
+  --project ~/my_experiment \
+  --gpu 0 \
+  --max-cycles 2
+```
 
 ## Configuration
 
-Default config lives in [`config.yaml`](config.yaml). The most important sections are:
-
-| Section | Purpose |
-|---------|---------|
-| `agent` | Cloud provider, model, role-specific overrides |
-| `strategy` | Deterministic idea/code routing rules |
-| `execution` | Local, SSH, or Slurm execution backend |
-| `ledger` | Append-only experiment history |
-| `journal` | Durable `DEAD_ENDS.md` and `INSIGHTS.md` |
-| `monitor` | Zero-LLM polling behavior |
-| `notes` | Dashboard and daily progress note export |
-
-Cloud provider examples:
+Default configuration is in [`config.yaml`](config.yaml). For this project, the recommended setup is Codex CLI for reasoning and code edits, with built-in launch control:
 
 ```yaml
 agent:
-  provider: "openai"
+  provider: "codex_cli"
   model: "gpt-5.4"
-  api_key_env: "OPENAI_API_KEY"
+
+  leader_provider: "codex_cli"
+  reflect_provider: "codex_cli"
+  code_modify_provider: "codex_cli"
+  code_launch_provider: "builtin"
 ```
 
+Why `code_launch_provider: "builtin"` matters:
+
+- Codex CLI is good at reading and changing code.
+- Training launch must stay controlled by Auto Researcher.
+- Auto Researcher records the authoritative PID/job id and log file.
+- Monitoring then reads process state, GPU state, and log tails without spending LLM calls.
+
+Optional cloud API roles are still supported. Use them when you want literature search or writing roles to run through an OpenAI-compatible API:
+
 ```yaml
 agent:
-  provider: "deepseek"
-  model: "deepseek-chat"
+  provider: "codex_cli"
+  model: "gpt-5.4"
+
+  leader_provider: "codex_cli"
+  reflect_provider: "codex_cli"
+  code_modify_provider: "codex_cli"
+  code_launch_provider: "builtin"
+
+  idea_provider: "openai"
+  idea_model: "gpt-5.4"
+  idea_api_key_env: "OPENAI_API_KEY"
+  writing_provider: "openai"
+  writing_model: "gpt-5.4"
+  writing_api_key_env: "OPENAI_API_KEY"
 ```
 
 Supported provider paths include:
 
-- `openai`
-- `anthropic`
-- `claude_cli`
-- `codex_cli`
-- OpenAI-compatible presets: `deepseek`, `qwen`, `dashscope`, `kimi`, `moonshot`, `glm`, `zhipu`
+| Provider | Use case |
+|----------|----------|
+| `codex_cli` | Recommended code editing and controller reasoning |
+| `openai` | OpenAI-compatible API calls |
+| `anthropic` | Anthropic-compatible API calls |
+| `claude_cli` | Optional Claude Code CLI path |
+| `deepseek`, `qwen`, `dashscope`, `kimi`, `moonshot`, `glm`, `zhipu` | OpenAI-compatible presets |
 
-No local LLM server is required.
+## How It Works
 
-## Skills
+<p align="center">
+  <img src="assets/readme/architecture.png" alt="Auto Researcher architecture" width="900"/>
+</p>
 
-Install Claude Code slash commands and Codex local skills:
+| Stage | Responsibility |
+|-------|----------------|
+| Think | Read `PROJECT_BRIEF.md`, memory, ledger, state, and directives |
+| Route | Choose `idea`, `code`, or `writing` for the next cycle |
+| Code Modify | Codex CLI edits code/configs and returns a launch handoff |
+| Dry Run | Auto Researcher runs the dry-run command |
+| Launch | Auto Researcher launches training and records PID/log path |
+| Monitor | Poll process, GPU, and log file with zero LLM calls |
+| Reflect | Parse metrics, update memory, ledger, insights, and dead ends |
 
-```bash
-python install.py
+For code work, Codex should return a handoff like:
+
+```json
+{
+  "status": "ready_to_launch",
+  "changed_files": ["train.py", "configs/exp.yaml"],
+  "dry_run_command": "python train.py --config configs/exp.yaml --max_steps 2",
+  "launch_command": "python train.py --config configs/exp.yaml",
+  "log_file": "logs/exp_001.log",
+  "expected_duration": "8 hours"
+}
 ```
 
-Available skills:
-
-| Claude Code | Codex | Purpose |
-|-------------|-------|---------|
-| `/auto-research` | `$auto-research` | Launch or resume the autonomous loop |
-| `/experiment-status` | `$experiment-status` | Inspect state, PID, logs, GPU, ledger |
-| `/gpu-monitor` | `$gpu-monitor` | Check GPU availability |
-| `/daily-papers` | `$daily-papers` | Get arXiv recommendations |
-| `/paper-analyze` | `$paper-analyze` | Analyze a paper |
-| `/conf-search` | `$conf-search` | Search conference papers |
-| `/progress-report` | `$progress-report` | Summarize recent experiments |
-| `/notes-sync` | `$notes-sync` | Refresh dashboard and daily notes |
-
-Uninstall:
-
-```bash
-python install.py --uninstall
-```
+Auto Researcher uses that handoff to run the dry-run and launch command itself.
 
 ## Project State
 
-Each experiment project keeps state under `workspace/`:
+Each experiment project keeps durable state under `workspace/`:
 
 ```text
 workspace/
@@ -239,7 +255,11 @@ workspace/
 └── progress_tracking/        # local notes fallback
 ```
 
-These files are part of the control surface. They make the loop inspectable and interruptible.
+To redirect the next cycle:
+
+```bash
+echo "Try cosine warmup and compare against the last best run" > workspace/HUMAN_DIRECTIVE.md
+```
 
 ## Execution Backends
 
@@ -271,24 +291,38 @@ execution:
   slurm_gpus_per_job: 1
 ```
 
-In all modes, the framework records the authoritative PID or job id and log path.
+In every backend, Auto Researcher owns the job id or PID and the log path.
+
+## Skills
+
+`python install.py` installs Codex local skills:
+
+| Codex skill | Purpose |
+|-------------|---------|
+| `$auto-research` | Launch or resume the autonomous loop |
+| `$experiment-status` | Inspect state, PID, logs, GPU, ledger |
+| `$gpu-monitor` | Check GPU availability |
+| `$daily-papers` | Get arXiv recommendations |
+| `$paper-analyze` | Analyze a paper |
+| `$conf-search` | Search conference papers |
+| `$progress-report` | Summarize recent experiments |
+| `$notes-sync` | Refresh dashboard and daily notes |
+
+Uninstall:
+
+```bash
+python install.py --uninstall
+```
 
 ## Development
 
-Run the full test suite:
+Run checks:
 
 ```bash
 python -m unittest discover tests
 python -m py_compile auto_researcher/*.py auto_researcher/gpu/*.py install.py
 python -m auto_researcher.runner --check
 ```
-
-Current validation target:
-
-- unit tests pass without a GPU
-- skill installer install/uninstall is covered
-- tool path safety is tested
-- local, SSH, and Slurm execution logic is tested with mocks
 
 ## Repository Layout
 
@@ -307,19 +341,7 @@ auto_researcher/
 │   ├── notes.py
 │   └── gpu/
 ├── prompts/
-│   ├── leader.md
-│   ├── idea.md
-│   ├── code.md
-│   └── writing.md
 ├── skills/
-│   ├── auto-research/
-│   ├── experiment-status/
-│   ├── gpu-monitor/
-│   ├── daily-papers/
-│   ├── paper-analyze/
-│   ├── conf-search/
-│   ├── progress-report/
-│   └── notes-sync/
 ├── tests/
 ├── assets/readme/
 ├── config.yaml
@@ -328,5 +350,4 @@ auto_researcher/
 
 ## Research Integrity
 
-Auto Researcher is an experiment operator, not a replacement researcher. Use it to run repetitive cycles, gather evidence, and keep records. Keep the research question, interpretation, and final scientific judgment with the human.
-
+Auto Researcher is an experiment operator. It can run repetitive cycles, collect evidence, and keep records, but the research question, interpretation, and scientific responsibility stay with the human researcher.
