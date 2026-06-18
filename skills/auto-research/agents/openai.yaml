@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Research"
+  short_description: "Launch a hybrid Codex-controlled 24/7 experiment loop"
+  default_prompt: "Use $auto-research to launch or resume an Auto Researcher loop with strategy routing, Codex code modification, and framework-controlled training launch."

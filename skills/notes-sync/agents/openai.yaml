@@ -1,0 +1,4 @@
+interface:
+  display_name: "Notes Sync"
+  short_description: "Refresh the notes dashboard and daily notes"
+  default_prompt: "Use $notes-sync to refresh the notes dashboard or local progress notes for this project."
